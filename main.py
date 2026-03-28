@@ -1,30 +1,29 @@
 from astrbot.api.all import *
 
 class CustomReplyPlugin(Star):
-    def __init__(self, context: Context, config: dict):
+    def __init__(self, context: Context): # 去掉了 config 参数
         super().__init__(context)
-        self.config = config
-        # 初始化回复字典
-        self.reply_map = self.config.get("replies", {"1": "2"})
+        # 在 v4.13.1 中，通过 self.context.config 获取配置
+        self.reply_map = self.context.config.get("replies", {"1": "2"})
 
-    # 不使用装饰器，直接重写这个底层方法
+    # 底层监听方法
     async def handle_event(self, event: AstrMessageEvent):
-        # 1. 基础检查：确保是消息事件
+        # 确保是消息事件
         if not isinstance(event, AstrMessageEvent):
             return
 
-        # 2. 获取用户发送的纯文本
+        # 获取用户消息并去除空格
         message = event.message_obj.message_str.strip()
 
-        # 3. 匹配回复
+        # 匹配回复字典
         if message in self.reply_map:
-            # 停止事件传播，彻底拦截 LLM 的回复
+            # 停止事件传播，拦截 LLM
             event.stop_event()
             
-            # 获取对应的回复内容并返回
+            # 发送结果
             reply_content = self.reply_map[message]
             yield event.plain_result(reply_content)
 
-    # 监听配置变动
+    # 兼容配置更新逻辑
     async def on_config_loaded(self):
-        self.reply_map = self.config.get("replies", {"1": "2"})
+        self.reply_map = self.context.config.get("replies", {"1": "2"})
