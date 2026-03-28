@@ -2,6 +2,6 @@ name: wlgdnb6666_astrbot_plugin_custom_reply
 display_name: 自定义拦截回复
 description: 匹配关键字后直接回复并拦截大模型 LLM 的响应。
 author: 青禾遇海
-version: 1.0.9
+version: 1.1.0
 repo_url: https://github.com/wlgdnb6666/wlgdnb6666-astrbot_plugin_custom_reply
 astrbot_version: ">=4.13.0"
