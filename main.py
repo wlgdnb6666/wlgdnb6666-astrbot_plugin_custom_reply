@@ -1,36 +1,35 @@
 from astrbot.api.all import *
 
 class CustomReplyPlugin(Star):
-    def __init__(self, context: Context, config: dict = None):
-        super().__init__(context)
-        # 获取配置
-        self.config_data = config if config else getattr(self.context, "config", {})
-        self.reply_map = self.config_data.get("replies", {"1": "2"})
-
-    # 提高优先级，确保在 LLM 之前拦截
+    # 彻底不写 __init__，由父类 Star 自动处理，避开重载时的参数校验 Bug
+    
     def priority(self) -> int:
-        return -1
+        return -1 # 保持最高优先级，确保拦截 LLM
 
     @event_filter.on_recv_message()
     async def handle_custom_reply(self, event: AstrMessageEvent):
-        # 1. 获取消息原文并去除前后空格
+        # 1. 动态获取配置（兼容重载后的上下文）
+        config_obj = getattr(self, "config", getattr(self.context, "config", {}))
+        reply_map = config_obj.get("replies", {"1": "2"})
+
+        # 2. 获取消息原文并清洗
         message = event.message_obj.message_str.strip()
 
-        # 2. 如果消息是以 / 开头的，直接跳过，不触发本插件逻辑
+        # 3. 排除指令形式（以 / 开头的跳过）
         if message.startswith('/'):
             return
 
-        # 3. 匹配关键字（全匹配）
-        if message in self.reply_map:
-            # 停止事件，让 LLM 闭嘴
+        # 4. 匹配关键字
+        if message in reply_map:
+            # 停止事件传播，拦截后续插件（包括 LLM）
             event.stop_event()
             
-            # 获取回复内容
-            reply_content = self.reply_map[message]
-            
-            # 发送结果
+            # 获取回复内容并 yield 发送
+            reply_content = reply_map[message]
             yield event.plain_result(reply_content)
 
     async def on_config_loaded(self):
-        self.config_data = getattr(self, "config", getattr(self.context, "config", {}))
-        self.reply_map = self.config_data.get("replies", {"1": "2"})
+        """
+        WebUI 配置保存后的回调
+        """
+        pass # 逻辑已在 handle_custom_reply 中动态处理
