@@ -1,7 +1,6 @@
 from astrbot.api.all import *
 
-# 注册插件：已替换为你的作者名和仓库地址
-@register("custom_reply", "青禾遇海", "自定义精确匹配回复并拦截 LLM 的插件", "1.0.0", "https://github.com/wlgdnb6666/wlgdnb6666-astrbot_plugin_custom_reply")
+@register("custom_reply", "青禾遇海", "自定义精确匹配回复并拦截 LLM 的插件", "1.0.1", "https://github.com/wlgdnb6666/wlgdnb6666-astrbot_plugin_custom_reply")
 class CustomReplyPlugin(Star):
     def __init__(self, context: Context, config: dict):
         super().__init__(context)
@@ -9,7 +8,8 @@ class CustomReplyPlugin(Star):
         # 从配置中读取回复映射
         self.reply_map = self.config.get("replies", {"1": "2"})
 
-    @filter.on_message()
+    # 关键点：将 filter 修改为 event_filter
+    @event_filter.on_recv_message()
     async def on_message(self, event: AstrMessageEvent):
         # 获取用户消息并去除空格
         user_text = event.message_obj.message_str.strip()
